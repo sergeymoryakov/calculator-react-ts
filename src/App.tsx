@@ -21,13 +21,79 @@ const CalculatorBase = styled(Paper)(({ theme }) => ({
 function App() {
     const [currentValue, setCurrentValue] = useState("0");
     const [operation, setOperation] = useState("");
+    const [prevValue, setPrevValue] = useState("");
+    const [overwrite, setOverwrite] = useState(true);
+
+    const calculate = () => {
+        if (!prevValue || !operation) return currentValue;
+
+        const curr = parseFloat(currentValue);
+        const prev = parseFloat(prevValue);
+
+        let result;
+        switch (operation) {
+            case "+":
+                result = prev + curr;
+                break;
+            case "*":
+                result = prev * curr;
+                break;
+            case "-":
+                result = prev - curr;
+                break;
+            case "/":
+                result = prev / curr;
+                break;
+        }
+        return result;
+    };
+
+    const equals = () => {
+        const val = calculate();
+        setCurrentValue(`${val}`);
+        setPrevValue("");
+        setOperation("");
+        setOverwrite(true);
+    };
+
+    const clear = () => {
+        setPrevValue("");
+        setOperation("");
+        setCurrentValue("0");
+        setOverwrite(true);
+    };
+
+    const del = () => {
+        setCurrentValue("0");
+        setOverwrite(true);
+    };
+
+    const percent = () => {
+        const curr = parseFloat(currentValue);
+        setCurrentValue((curr / 100).toString());
+    };
 
     const selectOperation = (operation: string) => {
+        if (prevValue) {
+            const val = calculate();
+            setCurrentValue(`${val}`);
+            setPrevValue(`${val}`);
+        } else {
+            setPrevValue(currentValue);
+        }
         setOperation(operation);
+        setOverwrite(true);
     };
 
     const setDigit = (digit: string) => {
-        setCurrentValue(digit);
+        if (currentValue[0] === "0" && digit === "0") return;
+        if (currentValue.includes(".") && digit === ".") return;
+        if (overwrite && digit !== ".") {
+            setCurrentValue(digit);
+        } else {
+            setCurrentValue(`${currentValue}${digit}`);
+        }
+        setOverwrite(false);
     };
 
     return (
@@ -41,17 +107,17 @@ function App() {
                         <Grid item container columnSpacing={1}>
                             <GridOperationButton
                                 operation={"AC"}
-                                selectOperation={selectOperation}
+                                selectOperation={clear}
                                 selectedOperation={operation}
                             />
                             <GridOperationButton
                                 operation={"C"}
-                                selectOperation={selectOperation}
+                                selectOperation={del}
                                 selectedOperation={operation}
                             />
                             <GridOperationButton
                                 operation={"%"}
-                                selectOperation={selectOperation}
+                                selectOperation={percent}
                                 selectedOperation={operation}
                             />
                             <GridOperationButton
@@ -128,7 +194,11 @@ function App() {
                                 enterDigit={setDigit}
                             />
                             <Grid item xs={3}>
-                                <Button fullWidth variant="contained">
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    onClick={equals}
+                                >
                                     =
                                 </Button>
                             </Grid>
